@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <title>Rezervo Terminin – TerminLDentalX</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f8ff; }
+        h1 { color: #004466; }
+        .picker { margin-bottom: 20px; }
+        .slot { display: inline-block; margin: 5px; padding: 10px; background: white; border: 1px solid #ccc; cursor: pointer; }
+        .slot:hover { background: #e0f7fa; }
+        .selected { background: #007acc; color: white; }
+        #confirm { margin-top: 20px; padding: 10px 20px; background: #007acc; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Rezervo Terminin</h1>
+    <div class="picker">
+        <label for="date">Zgjidh datën:</label>
+        <input type="text" id="date" placeholder="Zgjidh një datë" />
+    </div>
+    <div id="slots"></div>
+
+    <div style="margin-top:20px;">
+        <label>Emri dhe Mbiemri:</label>
+        <input type="text" id="name" style="padding: 8px; width: 250px;" />
+    </div>
+    <button id="confirm">Rezervo</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        let selectedDate = "";
+        let selectedTime = "";
+        let scheduleData = {};
+
+        fetch("oraret_5_vjeqare.json")
+        .then(res => res.json())
+        .then(data => scheduleData = data);
+
+        flatpickr("#date", {
+            dateFormat: "d/m/Y",
+            minDate: "today",
+            onChange: function(selectedDates, dateStr, instance) {
+                selectedDate = dateStr;
+                selectedTime = "";
+                renderSlots(dateStr);
+            }
+        });
+
+        function renderSlots(dateStr) {
+            const slotsDiv = document.getElementById("slots");
+            slotsDiv.innerHTML = "";
+            const found = Object.keys(scheduleData).find(key => key.endsWith(dateStr));
+            if (!found) {
+                slotsDiv.innerHTML = "<p>Nuk ka orare të disponueshme për këtë datë.</p>";
+                return;
+            }
+            scheduleData[found].forEach(time => {
+                const btn = document.createElement("div");
+                btn.className = "slot";
+                btn.innerText = time;
+                btn.onclick = () => {
+                    document.querySelectorAll(".slot").forEach(el => el.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    selectedTime = time;
+                };
+                slotsDiv.appendChild(btn);
+            });
+        }
+
+        document.getElementById("confirm").onclick = () => {
+            const name = document.getElementById("name").value.trim();
+            if (!selectedDate || !selectedTime || !name) {
+                alert("Ju lutem plotësoni emrin, datën dhe orarin.");
+                return;
+            }
+            alert(`Termini u rezervua me sukses!\n\nEmri: ${name}\nData: ${selectedDate}\nOra: ${selectedTime}`);
+        };
+    </script>
+</body>
+</html>
